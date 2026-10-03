@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fintech POO + Blockchain</title>
+<style>
+*{box-sizing:border-box;font-family:Arial}body{margin:0;background:#0f1115;color:#eee}
+.card{background:#1c1f27;border-radius:16px;padding:20px;margin:20px auto;max-width:900px}
+input,select,button{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:1px solid #333;background:#13151a;color:#fff}
+button{background:#6c5ce7;cursor:pointer;font-weight:700}.success{background:#00b894}.danger{background:#d63031}
+.hidden{display:none}.block{border-left:4px solid #6c5ce7;background:#13151a;padding:10px;margin:8px 0;border-radius:8px;font-size:.9em}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<div id="login-view" class="card" style="max-width:400px;margin-top:60px;text-align:center">
+<h1>💳 FintechApp</h1>
+<p>Digital Bank - OOP + Blockchain</p>
+<button id="t1">Login</button><button id="t2">Register</button>
+<div id="f1"><input id="le" placeholder="Email"><input id="lp" type="password" placeholder="Password"><button id="bl">Sign In</button></div>
+<div id="f2" class="hidden"><input id="rn" placeholder="First Name"><input id="ra" placeholder="Last Name"><input id="rd" placeholder="ID / DNI"><input id="re" placeholder="Email"><input id="rp" type="password" placeholder="Password"><button id="br">Create Account</button></div>
+<p id="msg"></p>
+</div>
+<div id="dash" class="hidden">
+<div class="card"><b id="un"></b> <button id="out" style="width:auto;float:right">Logout</button>
+<h3>Create Bank Account</h3><input id="cc" placeholder="Code e.g. ACC-1001"><input id="cs" type="number" placeholder="Initial Balance"><button id="bccc">Create</button>
+<h3>My Accounts</h3><div id="cl"></div></div>
+<div class="grid"><div class="card"><h3>Operate</h3><select id="sc"></select><input id="mo" type="number" placeholder="Amount"><input id="de" placeholder="Description"><div style="display:flex;gap:10px"><button id="bd" class="success">Deposit</button><button id="bw" class="danger">Withdraw</button></div><h3>Balance: $<span id="sa">0</span></h3><button id="bv">🔗 Verify Blockchain</button><div id="iv"></div></div>
+<div class="card"><h3>Blockchain History</h3><div id="hi"></div></div></div>
+</div>
+<script>
+// --- OOP ---
+class Block{constructor(i,m,p){this.index=i;this.timestamp=new Date().toISOString();this.movement=m;this.prevHash=p;this.hash=this.calc()}calc(){let d=this.index+this.prevHash+this.timestamp+JSON.stringify(this.movement),h=0;for(let i=0;i<d.length;i++){h=((h<<5)-h)+d.charCodeAt(i);h|=0}return Math.abs(h).toString(16)}}
+class Blockchain{constructor(c){this.code=c;this.chain=[new Block(0,{type:'GENESIS',amount:0,desc:'Account created',resultBalance:0},'0')]}latest(){return this.chain[this.chain.length-1]}add(m){let b=new Block(this.chain.length,m,this.latest().hash);this.chain.push(b);return b}valid(){for(let i=1;i<this.chain.length;i++){if(this.chain[i].hash!==this.chain[i].calc())return{valid:false,error:'Block #'+i};if(this.chain[i].prevHash!==this.chain[i-1].hash)return{valid:false,error:'PrevHash #'+i}}return{valid:true}}}
+class Account{constructor(code,clientId,b=0){this.code=code;this.clientId=clientId;this.balance=Number(b);this.blockchain=new Blockchain(code);if(b>0)this.blockchain.add({type:'DEPOSIT',amount:b,prevBalance:0,resultBalance:b,desc:'Initial'})}deposit(a,d){a=Number(a);if(a<=0)throw'Amount must be >0';let p=this.balance;this.balance+=a;this.blockchain.add({type:'DEPOSIT',amount:a,date:new Date().toISOString(),prevBalance:p,resultBalance:this.balance,desc:d})}withdraw(a,d){a=Number(a);if(a>this.balance)throw'Insufficient funds';let p=this.balance;this.balance-=a;this.blockchain.add({type:'WITHDRAW',amount:a,date:new Date().toISOString(),prevBalance:p,resultBalance:this.balance,desc:d})}}
+// --- Storage ---
+const KC='fc_c', KQ='fc_q', KS='fc_s';
+const getC=()=>JSON.parse(localStorage.getItem(KC)||'[]');const saveC=l=>localStorage.setItem(KC,JSON.stringify(l));
+const getQ=()=>{let r=JSON.parse(localStorage.getItem(KQ)||'[]');return r.map(o=>{let c=new Account(o.code,o.clientId,0);c.balance=o.balance;c.blockchain.code=o.blockchain.code;c.blockchain.chain=o.blockchain.chain.map(b=>{let bl=new Block(b.index,b.movement,b.prevHash);bl.timestamp=b.timestamp;bl.hash=b.hash;return bl});return c})};const saveQ=l=>localStorage.setItem(KQ,JSON.stringify(l));
+const getS=()=>JSON.parse(localStorage.getItem(KS)||'null');
+let sel=null;
+function render(){let qs=getQ().filter(q=>q.clientId===getS().id);let cl=document.getElementById('cl'),sc=document.getElementById('sc');cl.innerHTML='';sc.innerHTML='';qs.forEach(c=>{cl.innerHTML+=`<div class=block><b>${c.code}</b> $${c.balance}</div>`;sc.innerHTML+=`<option value=${c.code}>${c.code} ($${c.balance})</option>`});if(qs.length){if(!sel)sel=qs[0].code;sc.value=sel;upd()}else{hi.innerHTML='No accounts';sa.textContent='0'}}
+function upd(){let cod=sc.value;if(!cod)return;sel=cod;let q=getQ().find(x=>x.code===cod);sa.textContent=q.balance;hi.innerHTML='';q.blockchain.chain.slice().reverse().forEach(b=>{hi.innerHTML+=`<div class=block><b>#${b.index} ${b.movement.type} $${b.movement.amount||0}</b><br><small>Hash:${b.hash} Prev:${b.prevHash}<br>${new Date(b.timestamp).toLocaleString()} | ${b.movement.prevBalance??0}→${b.movement.resultBalance??0}</small></div>`})}
+t1.onclick=()=>{f1.classList.remove('hidden');f2.classList.add('hidden')};t2.onclick=()=>{f2.classList.remove('hidden');f1.classList.add('hidden')};
+br.onclick=()=>{let cs=getC();if(cs.find(x=>x.email===re.value))return msg.textContent='Email exists';cs.push({id:Date.now(),firstName:rn.value,lastName:ra.value,dni:rd.value,email:re.value,password:rp.value});saveC(cs);msg.textContent='Created! Login now';t1.click()};
+bl.onclick=()=>{let u=getC().find(x=>x.email===le.value&&x.password===lp.value);if(!u)return msg.textContent='Invalid credentials';localStorage.setItem(KS,JSON.stringify(u));showDash()};
+bccc.onclick=()=>{let qs=getQ();if(qs.find(x=>x.code===cc.value))return alert('Code exists');qs.push(new Account(cc.value||'ACC-'+Date.now(),getS().id,cs.value||0));saveQ(qs);render()};
+bd.onclick=()=>{try{let qs=getQ();let q=qs.find(x=>x.code===sel);q.deposit(mo.value,de.value||'Deposit');saveQ(qs);render()}catch(e){alert(e)}};
+bw.onclick=()=>{try{let qs=getQ();let q=qs.find(x=>x.code===sel);q.withdraw(mo.value,de.value||'Withdraw');saveQ(qs);render()}catch(e){alert(e)}};
+sc.onchange=upd;
+bv.onclick=()=>{let q=getQ().find(x=>x.code===sel);let r=q.blockchain.valid();iv.innerHTML=r.valid?'<div class=block style=border-color:#00b894>✅ Valid chain</div>':'<div class=block style=border-color:red>❌ '+r.error+'</div>'};
+out.onclick=()=>{localStorage.removeItem(KS);location.reload()};
+function showDash(){document.getElementById('login-view').classList.add('hidden');dash.classList.remove('hidden');un.textContent=getS().firstName+' ('+getS().email+')';render()}
+if(getS())showDash();
+</script></body></html>
