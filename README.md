@@ -1,4 +1,4 @@
-## 💸 Fintech POO + Blockchain Challenge
+## 💸 Fintech OOP + Blockchain Challenge
 
 > A secure fintech wallet with immutable transaction history powered by a custom blockchain implementation. Built with OOP principles.
 
