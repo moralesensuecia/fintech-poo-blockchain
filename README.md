@@ -1,278 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fintech POO + Blockchain - Morales</title>
-<style>
-*{box-sizing:border-box;font-family:Inter,system-ui,sans-serif}
-body{background:#0f0f1a;color:#fff;margin:0;padding:20px}
-.card{background:#1e1e2f;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-input,select{width:100%;padding:12px;margin:8px 0;border-radius:10px;border:none;background:#2a2a40;color:#fff}
-button{padding:12px 16px;border:none;border-radius:10px;cursor:pointer;font-weight:600}
-.btn-primary{background:#7c5cff;color:#fff;width:100%}
-.btn-deposit{background:#00d9a5;color:#000;width:48%}
-.btn-withdraw{background:#ff6b7a;color:#fff;width:48%}
-.btn-verify{background:#7c5cff;color:#fff;width:100%;margin-top:10px}
-.btn-hack{background:#ffcc00;color:#000;width:100%;margin-top:8px}
-.flex{display:flex;gap:10px;flex-wrap:wrap}
-.badge{background:#2a2a40;padding:6px 10px;border-radius:20px;font-size:12px;margin:4px;display:inline-block}
-.block{border-left:3px solid #7c5cff;padding:10px;margin:10px 0;background:#2a2a40;border-radius:8px;font-size:13px;word-break:break-all}
-.hash{color:#00d9a5;font-size:11px}
-.topbar{display:flex;justify-content:space-between;align-items:center}
-.logout{background:#3a3a50;color:#fff}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:800px){.grid{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<h2>Fintech OOP + Blockchain - Morales</h2>
-<div id="auth" class="card">
-<h3>Login / Register</h3>
-<input id="email" placeholder="Email">
-<input id="pass" type="password" placeholder="Password">
-<input id="name" placeholder="Name (only register)">
-<input id="dni" placeholder="DNI (only register)">
-<div class="flex"><button class="btn-primary" onclick="register()">Register</button><button class="btn-primary" onclick="login()" style="background:#3a3a50">Login</button></div>
-</div>
-<div id="app" style="display:none">
-<div class="card topbar"><span id="userInfo"></span><button class="logout" onclick="logout()">Logout</button></div>
-<div class="grid">
-<div>
-<div class="card">
-<h3>Create Bank Account</h3>
-<input id="ctaCode" placeholder="CTA code e.g. CTA-1001">
-<input id="initial" type="number" placeholder="Initial balance e.g. 500">
-<button class="btn-primary" onclick="createAccount()">Create</button>
-<h4>My Accounts</h4>
-<div id="myAccounts"></div>
-</div>
-<div class="card">
-<h3>Operate</h3>
-<select id="accountSelect"></select>
-<input id="amount" type="number" placeholder="Amount">
-<input id="concept" placeholder="Concept e.g. TEST">
-<div class="flex">
-<button class="btn-deposit" onclick="operate('deposit')">Deposit</button>
-<button class="btn-withdraw" onclick="operate('withdraw')">Withdraw</button>
-</div>
-<h3 id="balance">Balance: $0</h3>
-<button class="btn-verify" onclick="verifyChain()">Verify Blockchain</button>
-<button class="btn-hack" onclick="simulateHack()">Simulate Hack</button>
-<div id="verifyResult"></div>
-</div>
-</div>
-<div class="card">
-<h3>Blockchain History</h3>
-<div id="blockchainHistory">No accounts selected</div>
-</div>
-</div>
-</div>
-<script>
-// ========== STAGE 2: CLIENT CLASS ==========
-class Client {
-  constructor(name, dni, email, pass) {
-    // Validations - If something is missing, throw an error here
-    if (!name || name.trim() === "") throw new Error('Name is required');
-    if (!dni || dni.trim() === "") throw new Error('DNI is required');
-    if (!email || !email.includes('@')) throw new Error('Invalid email');
-    if (!pass || pass.length < 4) throw new Error('Password must be at least 4 characters');
+💸 Fintech POO + Blockchain Challenge
+A secure fintech wallet with immutable transaction history powered by a custom blockchain implementation. Built with OOP principles.
 
-    this.name = name.trim();
-    this.dni = dni.trim();
-    this.email = email.trim();
-    this.pass = pass;
-    this.accounts = []; // Here the client will store his accounts
-  }
+Live Demo: https://moralesensuecia.github.io/fintech-poo-blockchain/ Author: LuksMor - 2026
 
-  // Method: Add an account to the client
-  addAccount(account) { this.accounts.push(account); }
+🚀 What is this?
+This is not just another CRUD wallet. It's a Fintech System designed under Object-Oriented Programming (POO) principles where every financial movement is secured by a Blockchain.
 
-  // Method: Find account by code
-  findAccount(code) { return this.accounts.find(c => c.code === code); }
+Each BankAccount owns its own Blockchain, and every DEPOSIT / WITHDRAW creates an immutable Block linked by cryptographic hashes.
 
-  // Method: Total balance of all accounts
-  totalBalance() { return this.accounts.reduce((total, c) => total + c.balance, 0); }
-}
+If someone tries to tamper with the history, the chain breaks. And we can prove it.
 
-// ========== BLOCKCHAIN ==========
-class Block {
-  constructor(index, timestamp, data, prevHash=''){
-    this.index=index;this.timestamp=timestamp;this.data=data;this.prevHash=prevHash;this.hash=this.calculateHash();
-  }
-  calculateHash(){return btoa(this.index+this.timestamp+JSON.stringify(this.data)+this.prevHash).slice(0,32);}
-}
-class Blockchain {
-  constructor(){this.chain=[this.createGenesis()];}
-  createGenesis(){return new Block(0,Date.now(),{type:'GENESIS',amount:0,concept:'Genesis Block',balanceBefore:0,balanceAfter:0},'0');}
-  getLatest(){return this.chain[this.chain.length-1];}
-  addBlock(data){const prev=this.getLatest();const block=new Block(prev.index+1,Date.now(),data,prev.hash);this.chain.push(block);return block;}
-  isValid(){
-    for(let i=1;i<this.chain.length;i++){
-      const curr=this.chain[i];const prev=this.chain[i-1];
-      if(curr.hash!==curr.calculateHash()) return {valid:false,error:`Block #${curr.index} hash corrupted`};
-      if(curr.prevHash!==prev.hash) return {valid:false,error:`Block #${curr.index} prevHash mismatch (broken at #${prev.index})`};
-    }
-    return {valid:true};
-  }
-}
+🧠 POO Architecture
+Principles: Encapsulation, Abstraction, Unique CTA constraint.
 
-// ========== BANK ACCOUNT ==========
-class BankAccount {
-  constructor(code,initialBalance){
-    this.code=code;this.balance=Number(initialBalance)||0;this.blockchain=new Blockchain();
-    if(this.balance>0){this.blockchain.addBlock({type:'DEPOSIT',amount:this.balance,concept:'Initial deposit',balanceBefore:0,balanceAfter:this.balance});}
-  }
-  deposit(amount,concept){amount=Number(amount);const before=this.balance;this.balance+=amount;this.blockchain.addBlock({type:'DEPOSIT',amount,concept,balanceBefore:before,balanceAfter:this.balance});}
-  withdraw(amount,concept){amount=Number(amount);if(amount>this.balance) throw new Error('Insufficient funds');const before=this.balance;this.balance-=amount;this.blockchain.addBlock({type:'WITHDRAW',amount,concept,balanceBefore:before,balanceAfter:this.balance});}
-}
+⛓️ Blockchain Features
+Genesis Block: Every account starts at #0
+Immutable Ledger: Full history with hash and prevHash
+Balance Tracking: Each block stores balanceBefore / balanceAfter
+Verification: Verify Blockchain checks integrity
+Fraud Simulation: Simulate Hack tampers Block #1 to show CORRUPTED
+Fraud demo:
 
-// ========== GLOBAL STATE ==========
-let usersRaw = JSON.parse(localStorage.getItem('fintech_users')||'[]');
-// Rebuild as Client objects so they keep their methods
-let users = usersRaw.map(u => {
-  try { const c = new Client(u.name || u.nombre, u.dni, u.email, u.pass); return c; }
-  catch(e){ return null; }
-}).filter(Boolean);
+Click Simulate Hack -> amount becomes $999999
+Click Verify -> CORRUPTED: Block #2 prevHash mismatch
+Proves immutability.
 
-let currentUser=null;let accounts={};
+💻 How to Use
+Register (Name, DNI, Email, Pass)
+Create Account (Unique CTA code + initial balance)
+Operate (Deposit/Withdraw)
+Audit (Check history + Verify)
+Data persists in localStorage.
 
-function saveUsers(){
-  const plain = users.map(u => ({name:u.name, dni:u.dni, email:u.email, pass:u.pass}));
-  localStorage.setItem('fintech_users',JSON.stringify(plain));
-}
-function saveAccounts(){
-  if(!currentUser) return;const toSave={};
-  for(const code in accounts){toSave[code]={code:accounts[code].code,balance:accounts[code].balance,chain:accounts[code].blockchain.chain};}
-  localStorage.setItem('fintech_acc_'+currentUser.email,JSON.stringify(toSave));
-}
-function loadAccounts(email){
-  const raw=localStorage.getItem('fintech_acc_'+email);if(!raw){accounts={};return;}
-  const parsed=JSON.parse(raw);accounts={};
-  for(const code in parsed){const obj=parsed[code];const acc=new BankAccount(obj.code,0);acc.balance=obj.balance;acc.blockchain.chain=obj.chain.map(b=>{const block=new Block(b.index,b.timestamp,b.data,b.prevHash);block.hash=b.hash;return block;});accounts[obj.code]=acc;}
-}
+📦 Stack
+Vanilla JS, HTML5/CSS3, GitHub Pages, Custom btoa() hash
 
-// ========== AUTH WITH CLIENT CLASS ==========
-function register(){
-  try{
-    const email=document.getElementById('email').value.trim();
-    const pass=document.getElementById('pass').value.trim();
-    const name=document.getElementById('name').value.trim();
-    const dni=document.getElementById('dni').value.trim();
-    if(users.find(u=>u.email===email)) return alert('Email already exists');
-    const newClient = new Client(name, dni, email, pass);
-    users.push(newClient);saveUsers();alert('Registered! You are now a real Client');
-  }catch(e){ alert(e.message); }
-}
-function login(){
-  const email=document.getElementById('email').value.trim();
-  const pass=document.getElementById('pass').value.trim();
-  const u=users.find(x=>x.email===email&&x.pass===pass);
-  if(!u) return alert('Invalid credentials');
-  currentUser=u;loadAccounts(email);
-  document.getElementById('auth').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('userInfo').innerText=`${u.name} (${u.email}) - DNI: ${u.dni}`;
-  refresh();
-}
-function logout(){saveAccounts();currentUser=null;document.getElementById('auth').style.display='block';document.getElementById('app').style.display='none';}
-function createAccount(){
-  const code=document.getElementById('ctaCode').value.trim();
-  const initial=Number(document.getElementById('initial').value||0);
-  if(!code) return alert('Enter code');
-  if(accounts[code]) return alert('Code already exists');
-  const newAcc = new BankAccount(code,initial);
-  accounts[code]=newAcc;
-  if(currentUser) currentUser.addAccount(newAcc);
-  saveAccounts();refresh();alert('Account created');
-}
-function refresh(){
-  const container=document.getElementById('myAccounts');
-  const sel=document.getElementById('accountSelect');
-  container.innerHTML='';sel.innerHTML='';
-  for(const code in accounts){
-    const acc=accounts[code];
-    const div=document.createElement('div');div.className='badge';div.innerText=`${acc.code} $${acc.balance}`;
-    div.onclick=()=>{document.getElementById('accountSelect').value=code;showHistory();};
-    container.appendChild(div);
-    const opt=document.createElement('option');opt.value=code;opt.innerText=`${acc.code} ($${acc.balance})`;sel.appendChild(opt);
-  }
-  sel.onchange=showHistory;showHistory();
-}
-function getSelected(){
-  const code=document.getElementById('accountSelect').value;
-  if(!code) throw new Error('No account selected');
-  const acc=accounts[code];if(!acc) throw new Error('Account not found');return acc;
-}
-function operate(type){
-  try{
-    const acc=getSelected();
-    const amount=Number(document.getElementById('amount').value);
-    const concept=document.getElementById('concept').value||'TEST';
-    if(!amount||amount<=0) return alert('Enter a valid amount');
-    if(type==='deposit') acc.deposit(amount,concept);else acc.withdraw(amount,concept);
-    saveAccounts();refresh();
-  }catch(e){alert(e.message);}
-}
-function showHistory(){
-  try{
-    const acc=getSelected();
-    document.getElementById('balance').innerText=`Balance: $${acc.balance}`;
-    const hist=document.getElementById('blockchainHistory');hist.innerHTML='';
-    [...acc.blockchain.chain].reverse().forEach(b=>{
-      const d=document.createElement('div');d.className='block';
-      d.innerHTML=`<b>#${b.index} ${b.data.type}</b> - $${b.data.amount} - ${b.data.concept}<br>Before:$${b.data.balanceBefore} After:$${b.data.balanceAfter}<br><span class=hash>hash:${b.hash}<br>prev:${b.prevHash}</span><br><small>${new Date(b.timestamp).toLocaleString()}</small>`;
-      hist.appendChild(d);
-    });
-  }catch(e){document.getElementById('blockchainHistory').innerText='No accounts';document.getElementById('balance').innerText='Balance: $0';}
-}
-function verifyChain(){
-  try{
-    const acc=getSelected();const res=acc.blockchain.isValid();
-    const out=document.getElementById('verifyResult');
-    if(res.valid) out.innerHTML='<div class=badge style=background:#00d9a5;color:#000;margin-top:10px>✅ VALID CHAIN - All blocks linked</div>';
-    else out.innerHTML=`<div class=badge style=background:#ff6b7a;margin-top:10px>❌ CORRUPTED: ${res.error}</div>`;
-  }catch(e){alert(e.message);}
-}
-function simulateHack(){
-  try{
-    const acc=getSelected();
-    if(acc.blockchain.chain.length<2) return alert('Need at least 1 operation');
-    acc.blockchain.chain[1].data.amount=999999;acc.blockchain.chain[1].data.concept='HACKED!';
-    saveAccounts();showHistory();
-    document.getElementById('verifyResult').innerHTML='<div class=badge style=background:#ffcc00;color:#000;margin-top:10px>💥 Block #1 tampered to $999999 - Now click Verify</div>';
-  }catch(e){alert(e.message);}
-}
 
-// ========== UNIT TEST SUITE - STAGE 2 ==========
-function testClient() {
-  console.log("=== CLIENT TESTS - STAGE 2 ===");
-  try { const c1 = new Client("Juan Morales", "12345678", "juan@test.com", "1234"); console.log("✅ Test 1 PASSED: Client created successfully"); }
-  catch(e) { console.log("❌ Test 1 FAILED: " + e.message); }
-  try { const c2 = new Client("", "123", "a@a.com", "1234"); console.log("❌ Test 2 FAILED: Should have thrown error for empty name"); }
-  catch(e) { console.log("✅ Test 2 PASSED: Detected empty name"); }
-  try { const c3 = new Client("Juan", "123", "no-at-sign", "1234"); console.log("❌ Test 3 FAILED: Should have thrown error for invalid email"); }
-  catch(e) { console.log("✅ Test 3 PASSED: Detected invalid email"); }
-  try { const c4 = new Client("Juan", "123", "a@a.com", "12"); console.log("❌ Test 4 FAILED: Should have thrown error for short password"); }
-  catch(e) { console.log("✅ Test 4 PASSED: Detected short password"); }
-  try {
-    const c5 = new Client("Ana", "999", "ana@test.com", "1234");
-    const acc1 = new BankAccount("CTA-1001", 500);
-    const acc2 = new BankAccount("CTA-1002", 300);
-    c5.addAccount(acc1); c5.addAccount(acc2);
-    if (c5.totalBalance() === 800) console.log("✅ Test 5 PASSED: Total balance 800 is correct");
-    else console.log("❌ Test 5 FAILED: Wrong total balance");
-  } catch(e) { console.log("❌ Test 5 FAILED: " + e.message); }
-  try {
-    const c6 = new Client("Ana", "999", "ana@test.com", "1234");
-    c6.addAccount(new BankAccount("CTA-2001", 100));
-    if (c6.findAccount("CTA-2001")) console.log("✅ Test 6 PASSED: Found the account");
-    else console.log("❌ Test 6 FAILED: Account not found");
-  } catch(e) { console.log("❌ Test 6 FAILED: " + e.message); }
-}
-testClient();
-</script>
-</body>
-</html>
----
-Made in Bålsta, Sweden by LuksMor.
